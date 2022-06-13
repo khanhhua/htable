@@ -1,4 +1,7 @@
 module Main where
+import Data.List (intersperse)
+
+type Header = String
 
 data Record = Record
   { no :: String
@@ -12,10 +15,10 @@ records =
 
 main :: IO ()
 main = do
-  putStrLn $ tableAscii []
-  
-tableAscii :: [Record] -> String
-tableAscii rows =
-  undefined
+  putStrLn $ tableAscii ["no", "name"] records
 
-
+tableAscii :: [Header] -> [Record] -> String
+tableAscii headers items = headerRow <> "\n" <> concatMap f items
+  where
+    headerRow = unwords $ intersperse " | "  headers 
+    f (Record no name) = no <> " | " <> name <> "\n"
