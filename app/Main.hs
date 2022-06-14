@@ -1,5 +1,6 @@
 module Main where
 import Data.List (intersperse)
+import Control.Monad (join)
 
 type Header = String
 type Formatted = String
@@ -9,33 +10,47 @@ data Record = Record
   , name :: String
   }
 
-data Column = Column
+data Column a = Column
   { header :: Header
-  , cells :: [Formatted]
+  , field :: a -> Formatted
   }
+
+
+type RecordColumn = Column Record
+
+columnNo :: RecordColumn
+columnNo = Column "no" no
+
+
+columnName :: RecordColumn
+columnName = Column "name" name
+
 
 records :: [Record]
 records =
   [ Record "1" "Tom"
+  , Record "2" "Jerry"
+  , Record "3" "Pitbull"
   ]
 
 main :: IO ()
 main = do
   let
     columns =
-      [ Column "no" $ map no records
-      , Column "name" $ map name records
+      [ columnNo
+      , columnName
       ]
-  putStrLn $ columnsAscii columns
+  putStrLn $ columnsAscii columns records
 
 
-columnsAscii :: [Column] -> String
-columnsAscii columns = headerRow <> "\n" <> body
+columnsAscii :: [RecordColumn] -> [Record] -> String
+columnsAscii columns rows = headerRow <> "\n" <> body
   where
     headerRow = unwords $ intersperse " | " $ map header columns
-    rows = map cells columns
-    body = unwords $ zipWith (curry f) (head rows) (rows!!1)
-    f (a, b) = a <> " | " <> b
+    extractors = map field columns
+    extractRow row = map (\f -> f row) extractors
+    rowsFormatted = map extractRow rows
+    body = join . intersperse "\n" $ map (unwords . intersperse " | ") rowsFormatted
 
 
 tableAscii :: [Header] -> [Record] -> String
