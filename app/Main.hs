@@ -1,4 +1,5 @@
 module Main where
+import Data.Monoid (mconcat,(<>))
 import Data.List (intersperse, transpose)
 import Control.Monad (join)
 
@@ -15,6 +16,16 @@ data Column a = Column
   , field :: a -> Formatted
   }
 
+newtype Table a = Table [Column a]
+
+instance Semigroup (Table a) where
+  (Table xs) <> (Table ys) = Table $ xs <> ys
+
+instance Monoid (Table a) where
+  mempty = Table []
+
+singleton :: Column a -> Table a
+singleton column = Table [column]
 
 type RecordColumn = Column Record
 
@@ -36,11 +47,11 @@ records =
 main :: IO ()
 main = do
   let
-    columns =
-      [ columnNo
-      , columnName
+    table = mconcat
+      [ singleton $ Column "no" no
+      , singleton $ Column "name" name
       ]
-  putStrLn $ columnsAscii columns records
+  putStrLn $ columnsAscii table records
 
 
 leftAlign :: [String] -> [String]
@@ -52,8 +63,8 @@ leftAlign cells =
         else s <> replicate (maxLength - length s) ' '
   in map pad cells
 
-columnsAscii :: [Column a] -> [a] -> String
-columnsAscii columns rows = output
+columnsAscii :: Table a -> [a] -> String
+columnsAscii (Table columns) rows = output
   where
     headerCells = map header columns
     extractors = map field columns
