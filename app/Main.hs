@@ -1,5 +1,5 @@
 module Main where
-import Data.List (intersperse)
+import Data.List (intersperse, transpose)
 import Control.Monad (join)
 
 type Header = String
@@ -30,7 +30,7 @@ records :: [Record]
 records =
   [ Record "1" "Tom"
   , Record "2" "Jerry"
-  , Record "3" "Pitbull"
+  , Record "3000" "Pitbull"
   ]
 
 main :: IO ()
@@ -43,11 +43,23 @@ main = do
   putStrLn $ columnsAscii columns records
 
 
+leftAlign :: [String] -> [String]
+leftAlign cells =
+  let
+    maxLength = foldl max 0 $ map length cells
+    pad s = if length s >= maxLength
+        then s
+        else s <> replicate (maxLength - length s) ' '
+  in map pad cells
+
 columnsAscii :: [Column a] -> [a] -> String
-columnsAscii columns rows = headerRow <> "\n" <> body
+columnsAscii columns rows = output
   where
-    headerRow = unwords $ intersperse " | " $ map header columns
+    headerCells = map header columns
     extractors = map field columns
     extractRow row = map (\f -> f row) extractors
-    rowsFormatted = map extractRow rows
-    body = join . intersperse "\n" $ map (unwords . intersperse " | ") rowsFormatted
+
+    cellsFormatted = headerCells : map extractRow rows
+    cellsFormattedAligned = (transpose . map leftAlign . transpose) cellsFormatted
+
+    output = join . intersperse "\n" $ map (unwords . intersperse "|") cellsFormattedAligned
