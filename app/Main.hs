@@ -43,7 +43,7 @@ main = do
   putStrLn $ columnsAscii columns records
 
 
-columnsAscii :: [RecordColumn] -> [Record] -> String
+columnsAscii :: [Column a] -> [a] -> String
 columnsAscii columns rows = headerRow <> "\n" <> body
   where
     headerRow = unwords $ intersperse " | " $ map header columns
@@ -51,10 +51,3 @@ columnsAscii columns rows = headerRow <> "\n" <> body
     extractRow row = map (\f -> f row) extractors
     rowsFormatted = map extractRow rows
     body = join . intersperse "\n" $ map (unwords . intersperse " | ") rowsFormatted
-
-
-tableAscii :: [Header] -> [Record] -> String
-tableAscii headers items = headerRow <> "\n" <> concatMap f items
-  where
-    headerRow = unwords $ intersperse " | "  headers
-    f (Record no name) = no <> " | " <> name <> "\n"
